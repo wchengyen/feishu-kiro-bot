@@ -1,5 +1,5 @@
 #!/bin/bash
-# 启动飞书-Kiro 桥接服务
+# 启动飞书-Kiro 桥接服务（WebSocket 长连接模式）
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -16,5 +16,5 @@ if [ -z "$FEISHU_APP_ID" ] || [ -z "$FEISHU_APP_SECRET" ]; then
     exit 1
 fi
 
-echo "🚀 启动飞书-Kiro 桥接服务 (port=${PORT:-9800})"
+echo "🚀 启动飞书-Kiro 桥接服务（WebSocket 长连接，无需公网IP）"
 python3 app.py

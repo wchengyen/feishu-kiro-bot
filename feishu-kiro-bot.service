@@ -1,5 +1,5 @@
 [Unit]
-Description=Feishu Kiro Bot Bridge
+Description=Feishu Kiro Bot Bridge (WebSocket)
 After=network.target
 
 [Service]
