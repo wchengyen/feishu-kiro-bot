@@ -1,0 +1,15 @@
+[Unit]
+Description=Feishu Kiro Bot Bridge
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/feishu-kiro-bot
+EnvironmentFile=/home/ubuntu/feishu-kiro-bot/.env
+ExecStart=/usr/bin/python3 /home/ubuntu/feishu-kiro-bot/app.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
