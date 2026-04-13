@@ -79,6 +79,76 @@ def reply_message(message_id: str, text: str):
     log.info(f"已回复消息 {message_id}（{len(chunks)} 段）")
 
 
+def upload_image(path: str) -> str | None:
+    """上传图片到飞书，返回 image_key"""
+    with open(path, "rb") as f:
+        req = CreateImageRequest.builder().request_body(
+            CreateImageRequestBody.builder().image_type("message").image(f).build()
+        ).build()
+        resp = client.im.v1.image.create(req)
+    if resp.success():
+        log.info(f"图片上传成功: {resp.data.image_key}")
+        return resp.data.image_key
+    log.error(f"图片上传失败: {resp.code} {resp.msg}")
+    return None
+
+
+def upload_file(path: str) -> str | None:
+    """上传文件到飞书，返回 file_key"""
+    ext = os.path.splitext(path)[1].lower()
+    type_map = {".opus": "opus", ".mp4": "mp4", ".pdf": "pdf", ".doc": "doc", ".docx": "doc",
+                ".xls": "xls", ".xlsx": "xls", ".ppt": "ppt", ".pptx": "ppt"}
+    file_type = type_map.get(ext, "stream")
+    with open(path, "rb") as f:
+        req = CreateFileRequest.builder().request_body(
+            CreateFileRequestBody.builder().file_type(file_type).file_name(os.path.basename(path)).file(f).build()
+        ).build()
+        resp = client.im.v1.file.create(req)
+    if resp.success():
+        log.info(f"文件上传成功: {resp.data.file_key}")
+        return resp.data.file_key
+    log.error(f"文件上传失败: {resp.code} {resp.msg}")
+    return None
+
+
+def reply_image(message_id: str, image_key: str):
+    """回复图片消息"""
+    req = ReplyMessageRequest.builder().message_id(message_id).request_body(
+        ReplyMessageRequestBody.builder().msg_type("image").content(json.dumps({"image_key": image_key})).build()
+    ).build()
+    resp = client.im.v1.message.reply(req)
+    if not resp.success():
+        log.error(f"回复图片失败: {resp.code} {resp.msg}")
+
+
+def reply_file(message_id: str, file_key: str):
+    """回复文件消息"""
+    req = ReplyMessageRequest.builder().message_id(message_id).request_body(
+        ReplyMessageRequestBody.builder().msg_type("file").content(json.dumps({"file_key": file_key})).build()
+    ).build()
+    resp = client.im.v1.message.reply(req)
+    if not resp.success():
+        log.error(f"回复文件失败: {resp.code} {resp.msg}")
+
+
+IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp"}
+FILE_EXTS = {".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".csv", ".txt", ".zip", ".mp4", ".opus"}
+
+
+def extract_file_paths(text: str) -> tuple[list[str], list[str]]:
+    """从文本中提取存在的图片和文件路径"""
+    images, files = [], []
+    for match in re.findall(r'(/[\w./_-]+\.[\w]+)', text):
+        if not os.path.isfile(match):
+            continue
+        ext = os.path.splitext(match)[1].lower()
+        if ext in IMAGE_EXTS:
+            images.append(match)
+        elif ext in FILE_EXTS:
+            files.append(match)
+    return images, files
+
+
 def _split_text(text: str, limit: int = 4000) -> list[str]:
     """按换行符分段，每段不超过 limit 字符"""
     if len(text) <= limit:
@@ -192,6 +262,19 @@ def handle_user_message(message_id: str, user_id: str, user_text: str):
 
     kiro_response = call_kiro(prompt)
     reply_message(message_id, kiro_response)
+
+    # 自动检测 Kiro 输出中的图片/文件路径并发送
+    images, files = extract_file_paths(kiro_response)
+    for img_path in images:
+        key = upload_image(img_path)
+        if key:
+            reply_image(message_id, key)
+            log.info(f"已发送图片: {img_path}")
+    for file_path in files:
+        key = upload_file(file_path)
+        if key:
+            reply_file(message_id, key)
+            log.info(f"已发送文件: {file_path}")
 
     # 异步提取结构化记忆（补充）
     if mem_enabled:
