@@ -210,7 +210,7 @@ def call_kiro(prompt: str) -> str:
     log.info(f"调用 kiro-cli: {prompt[:80]}...")
     try:
         result = subprocess.run(
-            ["kiro-cli", "chat", "--no-interactive", "-a", "--agent", "my-dev-bot", "--wrap", "never", prompt],
+            ["kiro-cli", "chat", "--no-interactive", "-a", "--agent", "kiro_default", "--wrap", "never", prompt],
             capture_output=True, text=True, timeout=KIRO_TIMEOUT,
             cwd=os.path.expanduser("~"),
             env={**os.environ, "NO_COLOR": "1"},
