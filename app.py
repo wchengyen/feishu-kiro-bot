@@ -29,6 +29,7 @@ if ENABLE_MEMORY:
 APP_ID = os.environ.get("FEISHU_APP_ID", "")
 APP_SECRET = os.environ.get("FEISHU_APP_SECRET", "")
 KIRO_TIMEOUT = int(os.environ.get("KIRO_TIMEOUT", "120"))
+KIRO_AGENT = os.environ.get("KIRO_AGENT", "").strip()
 
 # ============ 日志 ============
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -209,8 +210,12 @@ def strip_ansi(text: str) -> str:
 def call_kiro(prompt: str) -> str:
     log.info(f"调用 kiro-cli: {prompt[:80]}...")
     try:
+        cmd = ["kiro-cli", "chat", "--no-interactive", "-a", "--wrap", "never"]
+        if KIRO_AGENT:
+            cmd += ["--agent", KIRO_AGENT]
+        cmd.append(prompt)
         result = subprocess.run(
-            ["kiro-cli", "chat", "--no-interactive", "-a", "--agent", "kiro_default", "--wrap", "never", prompt],
+            cmd,
             capture_output=True, text=True, timeout=KIRO_TIMEOUT,
             cwd=os.path.expanduser("~"),
             env={**os.environ, "NO_COLOR": "1"},

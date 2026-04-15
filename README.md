@@ -57,6 +57,14 @@ cp .env.example .env
 vim .env   # 填入 APP_ID、APP_SECRET
 ```
 
+**可选配置项：**
+
+| 变量 | 说明 | 默认值 |
+|------|------|--------|
+| `KIRO_TIMEOUT` | Kiro CLI 超时时间（秒） | `120` |
+| `KIRO_AGENT` | 指定 Kiro agent，留空使用默认 agent | 空 |
+| `ENABLE_MEMORY` | 启用记忆功能 | `false` |
+
 ### 第六步：启动服务
 
 ```bash
