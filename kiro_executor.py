@@ -90,12 +90,13 @@ class KiroExecutor:
         """
         cmd = [kiro_bin, "chat", "--no-interactive", "-a", "--wrap", "never"]
         if session_id:
-            cmd += ["--resume-id", session_id]
+            cmd.append("--resume")
         if self._agent:
             cmd += ["--agent", self._agent]
         cmd.append(prompt)
 
         log.info(f"执行 kiro: session={session_id or 'new'}, prompt={prompt[:60]}...")
+        log.info(f"完整命令: {' '.join(cmd)}")
 
         proc = subprocess.Popen(
             cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
