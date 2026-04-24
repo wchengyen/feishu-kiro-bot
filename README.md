@@ -1,5 +1,9 @@
 # 飞书 ↔ Kiro Bot 桥接服务
 
+<p align="center">
+  <img src="kiro2.jpg" alt="Kiro Bot" width="180">
+</p>
+
 [![DeepWiki](https://img.shields.io/badge/DeepWiki-AI%20文档-blue)](https://deepwiki.com/wchengyen/feishu-kiro-bot)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
