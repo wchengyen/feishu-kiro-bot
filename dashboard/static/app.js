@@ -216,10 +216,34 @@ const EventsPage = {
       </div>
 
       <div class="toolbar">
+        <!-- 时间段 -->
+        <select v-model="timeRange" @change="onTimeChange">
+          <option value="">全部时间</option>
+          <option value="7d">一周</option>
+          <option value="30d">一个月</option>
+          <option value="90d">三个月</option>
+          <option value="custom">自定义</option>
+        </select>
+        <template v-if="timeRange === 'custom'">
+          <input type="date" v-model="customStart" />
+          <span style="color:#94a3b8">~</span>
+          <input type="date" v-model="customEnd" />
+        </template>
+        <!-- 服务名 -->
+        <select v-model="serviceFilter">
+          <option value="">全部服务</option>
+          <option v-for="s in serviceOptions" :key="s" :value="s">{{ s }}</option>
+        </select>
+        <!-- Entities -->
+        <select v-model="entityFilter">
+          <option value="">全部实体</option>
+          <option v-for="e in entityOptions" :key="e" :value="e">{{ e }}</option>
+        </select>
+        <!-- 原有筛选 -->
         <select v-model="filter.severity"><option value="">全部严重级别</option><option>critical</option><option>high</option><option>medium</option><option>low</option></select>
         <input v-model="filter.source" placeholder="Source" />
-        <input v-model="filter.q" placeholder="搜索标题/描述" @keyup.enter="load" />
-        <button @click="load">查询</button>
+        <input v-model="filter.q" placeholder="搜索标题/描述" @keyup.enter="loadEvents" />
+        <button @click="loadEvents">查询</button>
         <button class="secondary" @click="reset">重置</button>
         <button @click="openModal()">新建</button>
       </div>
@@ -227,7 +251,7 @@ const EventsPage = {
         <table>
           <thead><tr><th>时间</th><th>标题</th><th>Type</th><th>Source</th><th>Severity</th><th>Entities</th><th>描述</th><th>操作</th></tr></thead>
           <tbody>
-            <tr v-for="e in events" :key="e.id">
+            <tr v-for="e in displayEvents" :key="e.id">
               <td>{{ e.ts }}</td>
               <td>{{ e.title }}</td>
               <td>{{ e.event_type || "-" }}</td>
@@ -237,7 +261,7 @@ const EventsPage = {
               <td>{{ e.description }}</td>
               <td><button class="danger" @click="remove(e.id)">删除</button></td>
             </tr>
-            <tr v-if="events.length === 0"><td colspan="8" class="empty">暂无数据</td></tr>
+            <tr v-if="displayEvents.length === 0"><td colspan="8" class="empty">暂无数据</td></tr>
           </tbody>
         </table>
       </div>
@@ -264,8 +288,13 @@ const EventsPage = {
     </div>
   `,
   setup() {
-    const events = ref([]);
+    const allEvents = ref([]);
     const filter = reactive({ severity: "", source: "", q: "" });
+    const timeRange = ref("");
+    const customStart = ref("");
+    const customEnd = ref("");
+    const serviceFilter = ref("");
+    const entityFilter = ref("");
     const showModal = ref(false);
     const form = reactive({ title: "", event_type: "", source: "", severity: "medium", description: "", entities_raw: "" });
     const serviceRules = ref([]);
@@ -298,18 +327,77 @@ const EventsPage = {
       const name = fmtEntityName(event);
       return `(${svc}, ${name})`;
     }
+    function getDateRange() {
+      const now = new Date();
+      const fmt = d => d.toISOString().slice(0, 10);
+      if (timeRange.value === "7d") {
+        return [fmt(new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)), fmt(now)];
+      }
+      if (timeRange.value === "30d") {
+        return [fmt(new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)), fmt(now)];
+      }
+      if (timeRange.value === "90d") {
+        return [fmt(new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)), fmt(now)];
+      }
+      if (timeRange.value === "custom") {
+        return [customStart.value, customEnd.value];
+      }
+      return ["", ""];
+    }
+    function onTimeChange() {
+      if (timeRange.value !== "custom") {
+        customStart.value = "";
+        customEnd.value = "";
+      }
+    }
+    const serviceOptions = computed(() => {
+      const set = new Set(serviceRules.value.map(r => r.service).filter(Boolean));
+      return Array.from(set).sort();
+    });
+    const entityOptions = computed(() => {
+      const set = new Set();
+      for (const e of allEvents.value) {
+        let entities = e.entities;
+        if (typeof entities === "string") {
+          try { entities = JSON.parse(entities); } catch { continue; }
+        }
+        if (Array.isArray(entities)) entities.forEach(ent => set.add(ent));
+      }
+      return Array.from(set).sort();
+    });
+    const displayEvents = computed(() => {
+      return allEvents.value.filter(e => {
+        if (serviceFilter.value && fmtServiceName(e) !== serviceFilter.value) return false;
+        if (entityFilter.value) {
+          let entities = e.entities;
+          if (typeof entities === "string") {
+            try { entities = JSON.parse(entities); } catch { return false; }
+          }
+          if (!Array.isArray(entities) || !entities.includes(entityFilter.value)) return false;
+        }
+        return true;
+      });
+    });
     async function loadEvents() {
       const qs = new URLSearchParams();
       if (filter.severity) qs.append("severity", filter.severity);
       if (filter.source) qs.append("source", filter.source);
       if (filter.q) qs.append("q", filter.q);
+      const [start, end] = getDateRange();
+      if (start) qs.append("start_date", start);
+      if (end) qs.append("end_date", end);
       const data = await api("/events?" + qs.toString());
-      events.value = data.events || [];
+      allEvents.value = data.events || [];
     }
     function reset() {
       filter.severity = "";
       filter.source = "";
       filter.q = "";
+      timeRange.value = "";
+      customStart.value = "";
+      customEnd.value = "";
+      serviceFilter.value = "";
+      entityFilter.value = "";
       loadEvents();
     }
     async function remove(id) {
@@ -347,7 +435,7 @@ const EventsPage = {
       } catch {}
       loadEvents();
     });
-    return { events, filter, load: loadEvents, reset, remove, showModal, form, openModal, closeModal, save, fmtEntityPair };
+    return { allEvents, displayEvents, filter, timeRange, customStart, customEnd, serviceFilter, entityFilter, serviceOptions, entityOptions, loadEvents, reset, remove, showModal, form, openModal, closeModal, save, fmtEntityPair, onTimeChange };
   }
 };
 

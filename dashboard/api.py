@@ -92,6 +92,8 @@ def get_events():
     severity = request.args.get("severity")
     event_type = request.args.get("event_type")
     q = request.args.get("q")
+    start_date = request.args.get("start_date")
+    end_date = request.args.get("end_date")
     limit = request.args.get("limit", 50, type=int)
     offset = request.args.get("offset", 0, type=int)
 
@@ -111,6 +113,12 @@ def get_events():
         where_clauses.append("(title LIKE ? OR description LIKE ?)")
         params.append(f"%{q}%")
         params.append(f"%{q}%")
+    if start_date:
+        where_clauses.append("ts >= ?")
+        params.append(start_date)
+    if end_date:
+        where_clauses.append("ts <= ?")
+        params.append(end_date + "T23:59:59")
 
     sql = "SELECT * FROM events"
     if where_clauses:
