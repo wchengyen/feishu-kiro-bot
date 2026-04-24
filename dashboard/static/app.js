@@ -572,10 +572,16 @@ const ConfigPage = {
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Source</th><th>Severity</th><th>Agent</th><th>操作</th></tr></thead>
+            <thead><tr><th>Source</th><th>Service</th><th>Severity</th><th>Agent</th><th>操作</th></tr></thead>
             <tbody>
               <tr v-for="(m, i) in mappings" :key="i">
                 <td><input v-model="m.source" /></td>
+                <td>
+                  <select v-model="m.service">
+                    <option value="">- 全部服务 -</option>
+                    <option v-for="s in mappingServiceOptions" :key="s" :value="s">{{ s }}</option>
+                  </select>
+                </td>
                 <td>
                   <select v-model="m.severity">
                     <option>critical</option><option>high</option><option>medium</option><option>low</option>
@@ -584,7 +590,7 @@ const ConfigPage = {
                 <td><input v-model="m.agent" /></td>
                 <td><button class="danger" @click="removeMapping(i)">删除</button></td>
               </tr>
-              <tr v-if="mappings.length === 0"><td colspan="4" class="empty">暂无映射</td></tr>
+              <tr v-if="mappings.length === 0"><td colspan="5" class="empty">暂无映射</td></tr>
             </tbody>
           </table>
         </div>
@@ -650,7 +656,7 @@ const ConfigPage = {
       alert("已保存");
     }
     function addMapping() {
-      mappings.value.push({ source: "", severity: "medium", agent: "" });
+      mappings.value.push({ source: "", service: "", severity: "medium", agent: "" });
     }
     function removeMapping(i) {
       mappings.value.splice(i, 1);
@@ -665,8 +671,19 @@ const ConfigPage = {
     function removeServiceRule(i) {
       serviceRules.value.splice(i, 1);
     }
+    const mappingServiceOptions = computed(() => {
+      const set = new Set();
+      for (const r of serviceRules.value) {
+        if (r.service) set.add(r.service);
+      }
+      // Also include services already used in mappings
+      for (const m of mappings.value) {
+        if (m.service) set.add(m.service);
+      }
+      return Array.from(set).sort();
+    });
     onMounted(load);
-    return { tab, core, mappings, serviceRules, saveCore, saveMappings, addMapping, removeMapping, saveServiceRules, addServiceRule, removeServiceRule };
+    return { tab, core, mappings, serviceRules, mappingServiceOptions, saveCore, saveMappings, addMapping, removeMapping, saveServiceRules, addServiceRule, removeServiceRule };
   }
 };
 

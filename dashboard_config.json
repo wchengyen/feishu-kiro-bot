@@ -1,14 +1,16 @@
 {
   "mappings": [
     {
-      "source": "prometheus",
+      "agent": "ec2-alert-analyzer",
       "severity": "high",
-      "agent": "ec2-alert-analyzer"
+      "source": "prometheus",
+      "service": "EC2"
     },
     {
-      "source": "prometheus",
+      "agent": "ec2-alert-analyzer",
       "severity": "critical",
-      "agent": "ec2-alert-analyzer"
+      "source": "prometheus",
+      "service": "EC2"
     }
   ],
   "service_rules": [
@@ -40,7 +42,7 @@
     {
       "field": "title",
       "keyword": "node",
-      "service": "EC2"
+      "service": "EKS"
     },
     {
       "field": "source",
