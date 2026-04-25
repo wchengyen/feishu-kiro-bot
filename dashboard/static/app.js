@@ -546,11 +546,105 @@ const ResourcesPage = {
   template: `
     <div>
       <h2 class="page-title">Resources</h2>
-      <p style="color:#94a3b8">加载中...</p>
+      <div class="toolbar">
+        <button @click="load(true)" title="刷新">🔃</button>
+        <select v-model="filterType" @change="load()">
+          <option value="">全部类型</option>
+          <option value="ec2">EC2</option>
+          <option value="rds">RDS</option>
+        </select>
+        <input v-model="searchQ" placeholder="搜索 Name / ID" />
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:#64748b;cursor:pointer">
+          <input type="checkbox" v-model="onlyPinned" /> 仅看 Pinned
+        </label>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:40px">⭐</th>
+              <th>Name</th>
+              <th>Type</th>
+              <th>ID</th>
+              <th>Status</th>
+              <th style="width:120px">7d Trend</th>
+              <th style="width:70px">CPU</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="r in filteredResources" :key="r.id" :class="{ pinned: isPinned(r.id) }">
+              <td><button class="pin-btn" @click="togglePin(r.id)">{{ isPinned(r.id) ? '★' : '☆' }}</button></td>
+              <td>{{ r.name }}</td>
+              <td><span :class="'badge badge-' + r.type">{{ r.type }}</span></td>
+              <td><code class="tag">{{ r.raw_id }}</code></td>
+              <td>{{ r.status }}</td>
+              <td v-html="sparklineSvg(r.sparkline, sparklineColor(r.type))"></td>
+              <td>{{ r.current != null ? r.current + '%' : '-' }}</td>
+            </tr>
+            <tr v-if="filteredResources.length === 0"><td colspan="7" class="empty">暂无数据</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   `,
   setup() {
-    return {};
+    const resources = ref([]);
+    const pins = ref([]);
+    const filterType = ref("");
+    const searchQ = ref("");
+    const onlyPinned = ref(false);
+
+    function isPinned(id) { return pins.value.includes(id); }
+    async function togglePin(id) {
+      const idx = pins.value.indexOf(id);
+      if (idx >= 0) pins.value.splice(idx, 1);
+      else pins.value.push(id);
+      await api("/resources/pins", { method: "POST", body: { pins: pins.value } });
+      reorder();
+    }
+    function reorder() {
+      resources.value.sort((a, b) => {
+        const pa = isPinned(a.id) ? -1 : 1;
+        const pb = isPinned(b.id) ? -1 : 1;
+        return pa - pb;
+      });
+    }
+    function sparklineColor(type) {
+      return { ec2: "#3b82f6", rds: "#8b5cf6", eks: "#f59e0b" }[type] || "#94a3b8";
+    }
+    function sparklineSvg(points, color) {
+      if (!points || points.length < 2) return '<span style="color:#cbd5e1">-</span>';
+      const valid = points.filter(v => v != null);
+      if (valid.length < 2) return '<span style="color:#cbd5e1">-</span>';
+      const min = Math.min(...valid), max = Math.max(...valid);
+      const range = max - min || 1;
+      const pts = points.map((v, i) => {
+        if (v == null) return "";
+        const x = (i / (points.length - 1)) * 100;
+        const y = 30 - ((v - min) / range) * 30;
+        return `${x},${y}`;
+      }).filter(Boolean).join(" ");
+      return `<svg viewBox="0 0 100 30" width="100" height="30" style="display:block"><polyline fill="none" stroke="${color}" stroke-width="2" points="${pts}"/></svg>`;
+    }
+    async function load(refresh = false) {
+      const qs = new URLSearchParams();
+      if (refresh) qs.append("refresh", "1");
+      if (filterType.value) qs.append("type", filterType.value);
+      const data = await api("/resources?" + qs.toString());
+      resources.value = data.resources || [];
+      pins.value = data.pinned || [];
+      reorder();
+    }
+    const filteredResources = computed(() => {
+      let list = resources.value;
+      if (onlyPinned.value) list = list.filter(r => isPinned(r.id));
+      const q = searchQ.value.trim().toLowerCase();
+      if (q) list = list.filter(r => (r.name + r.raw_id).toLowerCase().includes(q));
+      return list;
+    });
+
+    onMounted(() => load());
+    return { resources, pins, filterType, searchQ, onlyPinned, isPinned, togglePin, sparklineSvg, sparklineColor, filteredResources, load };
   }
 };
 

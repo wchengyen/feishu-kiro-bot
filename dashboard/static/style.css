@@ -441,3 +441,20 @@ code.tag {
 /* ===== Misc ===== */
 .empty { text-align: center; padding: 48px; color: #cbd5e1; font-weight: 500; }
 h2.page-title { font-size: 22px; margin-bottom: 20px; color: #0b0f19; font-weight: 700; letter-spacing: -0.02em; }
+/* ===== Resources Page ===== */
+tr.pinned td { background: #f8fafc; }
+tr.pinned td:first-child { border-left: 3px solid #f59e0b; }
+.pin-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0;
+  color: #cbd5e1;
+  transition: .15s;
+}
+.pin-btn:hover { color: #f59e0b; }
+tr.pinned .pin-btn { color: #f59e0b; }
+.badge-ec2 { background: #eff6ff; color: #2563eb; }
+.badge-rds { background: #f5f3ff; color: #7c3aed; }
+.badge-eks { background: #fff7ed; color: #c2410c; }
