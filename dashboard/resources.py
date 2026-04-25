@@ -91,3 +91,50 @@ def get_cloudwatch_cpu(resource_id, namespace, dimension_name, days=7):
     )
     points = sorted(resp.get("Datapoints", []), key=lambda x: x["Timestamp"])
     return [round(p["Average"], 1) for p in points]
+
+import time
+
+_cache = {"data": None, "ts": 0}
+CACHE_TTL = 300
+
+
+def get_all_resources_with_metrics(refresh=False):
+    global _cache
+    if (
+        not refresh
+        and _cache["data"] is not None
+        and (time.time() - _cache["ts"]) < CACHE_TTL
+    ):
+        return _cache["data"]
+
+    resources = discover_all()
+    for r in resources:
+        if r.type == "ec2":
+            r.sparkline = get_cloudwatch_cpu(r.raw_id, "AWS/EC2", "InstanceId")
+        elif r.type == "rds":
+            r.sparkline = get_cloudwatch_cpu(
+                r.raw_id, "AWS/RDS", "DBInstanceIdentifier"
+            )
+        if r.sparkline:
+            r.current = r.sparkline[-1]
+
+    data = {
+        "resources": [resource_to_dict(r) for r in resources],
+        "cached": False,
+        "error": None,
+    }
+    _cache = {"data": data, "ts": time.time()}
+    return data
+
+
+def resource_to_dict(r: Resource) -> dict:
+    return {
+        "id": r.id,
+        "type": r.type,
+        "name": r.name,
+        "raw_id": r.raw_id,
+        "status": r.status,
+        "meta": r.meta,
+        "sparkline": r.sparkline,
+        "current": r.current,
+    }

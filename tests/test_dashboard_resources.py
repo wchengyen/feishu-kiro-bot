@@ -12,6 +12,7 @@ from dashboard.resources import (
     discover_rds,
     discover_all,
     get_cloudwatch_cpu,
+    get_all_resources_with_metrics,
 )
 
 
@@ -112,3 +113,50 @@ def test_get_cloudwatch_cpu_returns_empty_without_boto3(mock_client):
     with patch.dict("sys.modules", {"boto3": None}):
         result = get_cloudwatch_cpu("i-123", "AWS/EC2", "InstanceId")
         assert result == []
+
+
+@patch("dashboard.resources.discover_all")
+@patch("dashboard.resources.get_cloudwatch_cpu")
+def test_get_all_resources_with_metrics(mock_cw, mock_discover):
+    mock_discover.return_value = [
+        Resource(
+            id="ec2:i-123",
+            type="ec2",
+            name="test1",
+            raw_id="i-123",
+            status="running",
+            meta={},
+        )
+    ]
+    mock_cw.return_value = [10.0, 20.0, 30.0, 25.0, 15.0, 20.0, 22.0]
+
+    result = get_all_resources_with_metrics(refresh=True)
+    assert len(result["resources"]) == 1
+    assert result["resources"][0]["sparkline"] == [10.0, 20.0, 30.0, 25.0, 15.0, 20.0, 22.0]
+    assert result["resources"][0]["current"] == 22.0
+
+
+@patch("dashboard.resources.discover_all")
+@patch("dashboard.resources.get_cloudwatch_cpu")
+def test_get_all_resources_uses_cache(mock_cw, mock_discover):
+    mock_discover.return_value = [
+        Resource(
+            id="ec2:i-123",
+            type="ec2",
+            name="test1",
+            raw_id="i-123",
+            status="running",
+            meta={},
+        )
+    ]
+    mock_cw.return_value = [10.0, 20.0]
+
+    result1 = get_all_resources_with_metrics(refresh=True)
+    assert result1["resources"][0]["sparkline"] == [10.0, 20.0]
+
+    mock_discover.reset_mock()
+    mock_cw.reset_mock()
+    result2 = get_all_resources_with_metrics(refresh=False)
+    assert result2["resources"][0]["sparkline"] == [10.0, 20.0]
+    mock_discover.assert_not_called()
+    mock_cw.assert_not_called()
