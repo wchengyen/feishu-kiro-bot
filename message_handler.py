@@ -78,7 +78,7 @@ class MessageHandler:
 
         if text.startswith("/schedule"):
             args = text[len("/schedule"):].strip()
-            reply = self.scheduler.handle_command(user_id, args or "help")
+            reply = self.scheduler.handle_command(user_id, args or "help", source_platform=incoming.platform)
             self._reply(incoming, reply)
             return
 
