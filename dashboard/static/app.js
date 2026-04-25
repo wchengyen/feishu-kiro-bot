@@ -554,9 +554,14 @@ const ResourcesPage = {
           <option value="rds">RDS</option>
         </select>
         <input v-model="searchQ" placeholder="搜索 Name / ID" />
+        <input v-model="filterRegion" placeholder="Region" />
+        <input v-model="filterStatus" placeholder="Status" />
+        <input v-model="filterClass" placeholder="机型" />
+        <input v-model="filterOs" placeholder="OS" />
         <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:#64748b;cursor:pointer">
           <input type="checkbox" v-model="onlyPinned" /> 仅看 Pinned
         </label>
+        <button class="secondary" @click="resetFilters">重置</button>
       </div>
       <div class="table-wrap">
         <table>
@@ -600,6 +605,10 @@ const ResourcesPage = {
     const pins = ref([]);
     const filterType = ref("");
     const searchQ = ref("");
+    const filterRegion = ref("");
+    const filterStatus = ref("");
+    const filterClass = ref("");
+    const filterOs = ref("");
     const onlyPinned = ref(false);
 
     function isPinned(id) { return pins.value.includes(id); }
@@ -638,6 +647,14 @@ const ResourcesPage = {
       if (!stats || stats.avg == null) return '-';
       return `${stats.avg}% / ${stats.p95}% / ${stats.max}%`;
     }
+    function resetFilters() {
+      searchQ.value = "";
+      filterRegion.value = "";
+      filterStatus.value = "";
+      filterClass.value = "";
+      filterOs.value = "";
+      onlyPinned.value = false;
+    }
     async function load(refresh = false) {
       const qs = new URLSearchParams();
       if (refresh) qs.append("refresh", "1");
@@ -650,13 +667,37 @@ const ResourcesPage = {
     const filteredResources = computed(() => {
       let list = resources.value;
       if (onlyPinned.value) list = list.filter(r => isPinned(r.id));
+
       const q = searchQ.value.trim().toLowerCase();
       if (q) list = list.filter(r => (r.name + r.raw_id).toLowerCase().includes(q));
+
+      const region = filterRegion.value.trim().toLowerCase();
+      if (region) list = list.filter(r => (r.meta.region || '').toLowerCase().includes(region));
+
+      const status = filterStatus.value.trim().toLowerCase();
+      if (status) list = list.filter(r => r.status.toLowerCase().includes(status));
+
+      const cls = filterClass.value.trim().toLowerCase();
+      if (cls) {
+        list = list.filter(r => {
+          const val = r.type === 'ec2' ? (r.meta.instance_type || '') : (r.meta.db_instance_class || '');
+          return val.toLowerCase().includes(cls);
+        });
+      }
+
+      const os = filterOs.value.trim().toLowerCase();
+      if (os) {
+        list = list.filter(r => {
+          const val = r.type === 'ec2' ? (r.meta.os || '') : (r.meta.engine || '');
+          return val.toLowerCase().includes(os);
+        });
+      }
+
       return list;
     });
 
     onMounted(() => load());
-    return { resources, pins, filterType, searchQ, onlyPinned, isPinned, togglePin, sparklineSvg, sparklineColor, formatStats, filteredResources, load };
+    return { resources, pins, filterType, searchQ, filterRegion, filterStatus, filterClass, filterOs, onlyPinned, isPinned, togglePin, sparklineSvg, sparklineColor, formatStats, resetFilters, filteredResources, load };
   }
 };
 
