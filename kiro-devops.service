@@ -5,10 +5,10 @@ After=network.target
 [Service]
 Type=simple
 User=ubuntu
-WorkingDirectory=/home/ubuntu/feishu-kiro-bot
-EnvironmentFile=/home/ubuntu/feishu-kiro-bot/.env
+WorkingDirectory=/home/ubuntu/kiro-devops
+EnvironmentFile=/home/ubuntu/kiro-devops/.env
 Environment=PATH=/home/ubuntu/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-ExecStart=/usr/bin/python3 /home/ubuntu/feishu-kiro-bot/app.py
+ExecStart=/usr/bin/python3 /home/ubuntu/kiro-devops/app.py
 Restart=always
 RestartSec=5
 

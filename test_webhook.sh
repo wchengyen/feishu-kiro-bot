@@ -200,12 +200,12 @@ for r in rows:
 # ── 场景 8: 日志验证 ──
 echo ""
 echo "【场景 8】服务日志检查"
-if sudo journalctl -u feishu-kiro-bot.service --since "5 minutes ago" --no-pager 2>/dev/null | grep -q "触发 Kiro ec2-alert-analyzer skill"; then
+if sudo journalctl -u kiro-devops.service --since "5 minutes ago" --no-pager 2>/dev/null | grep -q "触发 Kiro ec2-alert-analyzer skill"; then
     pass "日志中发现 Kiro skill 触发记录"
 else
     fail "日志中未找到 Kiro skill 触发记录"
 fi
-if sudo journalctl -u feishu-kiro-bot.service --since "5 minutes ago" --no-pager 2>/dev/null | grep -q "事件入库"; then
+if sudo journalctl -u kiro-devops.service --since "5 minutes ago" --no-pager 2>/dev/null | grep -q "事件入库"; then
     pass "日志中发现事件入库记录"
 else
     fail "日志中未找到事件入库记录"

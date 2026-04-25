@@ -47,7 +47,7 @@
 
 ```bash
 # 进入 worktree
-cd /home/ubuntu/feishu-kiro-bot/.worktrees/resource-dashboard
+cd /home/ubuntu/kiro-devops/.worktrees/resource-dashboard
 
 # Python 交互式验证
 python3 -c "
@@ -179,7 +179,7 @@ time curl -b /tmp/dashboard_cookie.txt "http://localhost:5000/api/dashboard/reso
 确保新功能没有破坏现有 Dashboard：
 
 ```bash
-cd /home/ubuntu/feishu-kiro-bot/.worktrees/resource-dashboard
+cd /home/ubuntu/kiro-devops/.worktrees/resource-dashboard
 python3 -m pytest tests/test_dashboard*.py -q
 ```
 

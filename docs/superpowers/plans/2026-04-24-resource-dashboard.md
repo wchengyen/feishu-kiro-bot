@@ -200,7 +200,7 @@ def test_discover_ec2_no_name_tag(mock_client):
 - [ ] **Step 4: 运行测试确认失败（boto3 mock 应正常通过）**
 
 ```bash
-cd /home/ubuntu/feishu-kiro-bot && python3 -m pytest tests/test_dashboard_resources.py -v
+cd /home/ubuntu/kiro-devops && python3 -m pytest tests/test_dashboard_resources.py -v
 ```
 
 Expected: PASS（discover 函数已实现）
@@ -208,7 +208,7 @@ Expected: PASS（discover 函数已实现）
 - [ ] **Step 5: Commit**
 
 ```bash
-cd /home/ubuntu/feishu-kiro-bot && git add dashboard/resources.py tests/test_dashboard_resources.py && git commit -m "feat(resources): add AWS EC2/RDS discovery module"
+cd /home/ubuntu/kiro-devops && git add dashboard/resources.py tests/test_dashboard_resources.py && git commit -m "feat(resources): add AWS EC2/RDS discovery module"
 ```
 
 ---
@@ -295,7 +295,7 @@ from dashboard.resources import (
 - [ ] **Step 3: 运行测试**
 
 ```bash
-cd /home/ubuntu/feishu-kiro-bot && python3 -m pytest tests/test_dashboard_resources.py -v
+cd /home/ubuntu/kiro-devops && python3 -m pytest tests/test_dashboard_resources.py -v
 ```
 
 Expected: PASS
@@ -303,7 +303,7 @@ Expected: PASS
 - [ ] **Step 4: Commit**
 
 ```bash
-cd /home/ubuntu/feishu-kiro-bot && git add dashboard/resources.py tests/test_dashboard_resources.py && git commit -m "feat(resources): add CloudWatch CPU query"
+cd /home/ubuntu/kiro-devops && git add dashboard/resources.py tests/test_dashboard_resources.py && git commit -m "feat(resources): add CloudWatch CPU query"
 ```
 
 ---
@@ -433,7 +433,7 @@ def test_get_all_resources_uses_cache(mock_cw, mock_discover):
 - [ ] **Step 3: 运行测试**
 
 ```bash
-cd /home/ubuntu/feishu-kiro-bot && python3 -m pytest tests/test_dashboard_resources.py -v
+cd /home/ubuntu/kiro-devops && python3 -m pytest tests/test_dashboard_resources.py -v
 ```
 
 Expected: PASS
@@ -441,7 +441,7 @@ Expected: PASS
 - [ ] **Step 4: Commit**
 
 ```bash
-cd /home/ubuntu/feishu-kiro-bot && git add dashboard/resources.py tests/test_dashboard_resources.py && git commit -m "feat(resources): add cache and metrics aggregation"
+cd /home/ubuntu/kiro-devops && git add dashboard/resources.py tests/test_dashboard_resources.py && git commit -m "feat(resources): add cache and metrics aggregation"
 ```
 
 ---
@@ -494,7 +494,7 @@ def test_read_pinned_resources_preserves_other_keys(temp_mappings_file):
 - [ ] **Step 3: 运行测试**
 
 ```bash
-cd /home/ubuntu/feishu-kiro-bot && python3 -m pytest tests/test_dashboard_config_store.py -v
+cd /home/ubuntu/kiro-devops && python3 -m pytest tests/test_dashboard_config_store.py -v
 ```
 
 Expected: PASS
@@ -502,7 +502,7 @@ Expected: PASS
 - [ ] **Step 4: Commit**
 
 ```bash
-cd /home/ubuntu/feishu-kiro-bot && git add dashboard/config_store.py tests/test_dashboard_config_store.py && git commit -m "feat(config): add pinned_resources read/write"
+cd /home/ubuntu/kiro-devops && git add dashboard/config_store.py tests/test_dashboard_config_store.py && git commit -m "feat(config): add pinned_resources read/write"
 ```
 
 ---
@@ -673,7 +673,7 @@ def test_set_pins(auth_client, monkeypatch, tmp_path):
 - [ ] **Step 3: 运行全部 dashboard API 测试**
 
 ```bash
-cd /home/ubuntu/feishu-kiro-bot && python3 -m pytest tests/test_dashboard_api_resources.py tests/test_dashboard_api.py tests/test_dashboard_api_events.py tests/test_dashboard_api_scheduler.py -v
+cd /home/ubuntu/kiro-devops && python3 -m pytest tests/test_dashboard_api_resources.py tests/test_dashboard_api.py tests/test_dashboard_api_events.py tests/test_dashboard_api_scheduler.py -v
 ```
 
 Expected: ALL PASS
@@ -681,7 +681,7 @@ Expected: ALL PASS
 - [ ] **Step 4: Commit**
 
 ```bash
-cd /home/ubuntu/feishu-kiro-bot && git add dashboard/api.py tests/test_dashboard_api_resources.py && git commit -m "feat(api): add /resources and /resources/pins routes"
+cd /home/ubuntu/kiro-devops && git add dashboard/api.py tests/test_dashboard_api_resources.py && git commit -m "feat(api): add /resources and /resources/pins routes"
 ```
 
 
@@ -742,7 +742,7 @@ const routes = [
 - [ ] **Step 3: 启动 Flask 应用，浏览器验证 `/dashboard/#/resources` 可访问且 Sidebar 有 Resources 入口**
 
 ```bash
-cd /home/ubuntu/feishu-kiro-bot && python3 -c "from app import app; app.run(port=5000, debug=False)" &
+cd /home/ubuntu/kiro-devops && python3 -c "from app import app; app.run(port=5000, debug=False)" &
 ```
 
 然后 curl 验证：
@@ -755,7 +755,7 @@ Expected: 输出 `Resources`
 - [ ] **Step 4: Commit**
 
 ```bash
-cd /home/ubuntu/feishu-kiro-bot && git add dashboard/static/index.html dashboard/static/app.js && git commit -m "feat(dashboard): add Resources page skeleton and sidebar nav"
+cd /home/ubuntu/kiro-devops && git add dashboard/static/index.html dashboard/static/app.js && git commit -m "feat(dashboard): add Resources page skeleton and sidebar nav"
 ```
 
 ---
@@ -914,7 +914,7 @@ Expected: 返回一段包含 `<svg>` 和 `<polyline>` 的 HTML 字符串。
 - [ ] **Step 4: Commit**
 
 ```bash
-cd /home/ubuntu/feishu-kiro-bot && git add dashboard/static/app.js dashboard/static/style.css && git commit -m "feat(dashboard): add Resources table with SVG sparkline"
+cd /home/ubuntu/kiro-devops && git add dashboard/static/app.js dashboard/static/style.css && git commit -m "feat(dashboard): add Resources table with SVG sparkline"
 ```
 
 ---
@@ -958,7 +958,7 @@ tr.pinned:hover td { background: #f1f5f9; }
 - [ ] **Step 4: Commit**
 
 ```bash
-cd /home/ubuntu/feishu-kiro-bot && git add dashboard/static/app.js dashboard/static/style.css && git commit -m "style(dashboard): polish pin interaction and hover states"
+cd /home/ubuntu/kiro-devops && git add dashboard/static/app.js dashboard/static/style.css && git commit -m "style(dashboard): polish pin interaction and hover states"
 ```
 
 ---
@@ -978,7 +978,7 @@ cd /home/ubuntu/feishu-kiro-bot && git add dashboard/static/app.js dashboard/sta
 - [ ] **Step 2: 运行全部 dashboard 回归测试**
 
 ```bash
-cd /home/ubuntu/feishu-kiro-bot && python3 -m pytest tests/test_dashboard*.py -q
+cd /home/ubuntu/kiro-devops && python3 -m pytest tests/test_dashboard*.py -q
 ```
 
 Expected: ALL PASS（当前 baseline 为 24 个测试，新增后应全部通过）
@@ -986,7 +986,7 @@ Expected: ALL PASS（当前 baseline 为 24 个测试，新增后应全部通过
 - [ ] **Step 3: Commit 并推送**
 
 ```bash
-cd /home/ubuntu/feishu-kiro-bot && git add .env.example && git commit -m "chore: add PROMETHEUS_URL placeholder to .env.example"
+cd /home/ubuntu/kiro-devops && git add .env.example && git commit -m "chore: add PROMETHEUS_URL placeholder to .env.example"
 ```
 
 ---

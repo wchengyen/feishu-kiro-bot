@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build a Vue 3 CDN + Flask Blueprint web dashboard for feishu-kiro-bot to visualize agents/skills, manage events/scheduler, and edit bot configuration.
+**Goal:** Build a Vue 3 CDN + Flask Blueprint web dashboard for kiro-devops to visualize agents/skills, manage events/scheduler, and edit bot configuration.
 
 **Architecture:** Flask Blueprint mounted at `/dashboard/` and `/api/dashboard/`, sharing the same process as the existing Bot. Frontend is a Vue 3 SPA loaded from CDN with no build step. All data operations reuse existing `EventStore`, `Scheduler`, and `.env`.
 
@@ -72,7 +72,7 @@ def test_protected_route_without_auth(client):
 - [ ] **Step 2: Run test to verify it fails**
 
 ```bash
-cd /home/ubuntu/feishu-kiro-bot && python3 -m pytest tests/test_dashboard_auth.py -v
+cd /home/ubuntu/kiro-devops && python3 -m pytest tests/test_dashboard_auth.py -v
 ```
 
 Expected: FAIL with "ModuleNotFoundError: No module named 'dashboard'"
@@ -80,7 +80,7 @@ Expected: FAIL with "ModuleNotFoundError: No module named 'dashboard'"
 - [ ] **Step 3: Implement dashboard/__init__.py**
 
 ```python
-"""Dashboard Blueprint — Web panel for feishu-kiro-bot"""
+"""Dashboard Blueprint — Web panel for kiro-devops"""
 import os
 import uuid
 from functools import wraps
@@ -134,7 +134,7 @@ def dashboard_index():
 - [ ] **Step 4: Run tests to verify they pass**
 
 ```bash
-cd /home/ubuntu/feishu-kiro-bot && python3 -m pytest tests/test_dashboard_auth.py -v
+cd /home/ubuntu/kiro-devops && python3 -m pytest tests/test_dashboard_auth.py -v
 ```
 
 Expected: 3 PASS
@@ -142,7 +142,7 @@ Expected: 3 PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-cd /home/ubuntu/feishu-kiro-bot && git add dashboard/__init__.py tests/test_dashboard_auth.py && git commit -m "feat(dashboard): add blueprint skeleton and auth middleware"
+cd /home/ubuntu/kiro-devops && git add dashboard/__init__.py tests/test_dashboard_auth.py && git commit -m "feat(dashboard): add blueprint skeleton and auth middleware"
 ```
 
 ---
@@ -178,7 +178,7 @@ def test_list_skills():
 - [ ] **Step 2: Run test to verify it fails**
 
 ```bash
-cd /home/ubuntu/feishu-kiro-bot && python3 -m pytest tests/test_dashboard_scanner.py -v
+cd /home/ubuntu/kiro-devops && python3 -m pytest tests/test_dashboard_scanner.py -v
 ```
 
 Expected: FAIL with "ModuleNotFoundError" or function not defined
@@ -257,7 +257,7 @@ def list_skills() -> list[dict]:
 - [ ] **Step 4: Run tests to verify they pass**
 
 ```bash
-cd /home/ubuntu/feishu-kiro-bot && python3 -m pytest tests/test_dashboard_scanner.py -v
+cd /home/ubuntu/kiro-devops && python3 -m pytest tests/test_dashboard_scanner.py -v
 ```
 
 Expected: PASS
@@ -265,7 +265,7 @@ Expected: PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-cd /home/ubuntu/feishu-kiro-bot && git add dashboard/kiro_scanner.py tests/test_dashboard_scanner.py && git commit -m "feat(dashboard): add kiro scanner for agents and skills"
+cd /home/ubuntu/kiro-devops && git add dashboard/kiro_scanner.py tests/test_dashboard_scanner.py && git commit -m "feat(dashboard): add kiro scanner for agents and skills"
 ```
 
 ---
@@ -318,7 +318,7 @@ def test_mappings_roundtrip():
 - [ ] **Step 2: Run test to verify it fails**
 
 ```bash
-cd /home/ubuntu/feishu-kiro-bot && python3 -m pytest tests/test_dashboard_config_store.py -v
+cd /home/ubuntu/kiro-devops && python3 -m pytest tests/test_dashboard_config_store.py -v
 ```
 
 Expected: FAIL
@@ -418,7 +418,7 @@ class ConfigStore:
 - [ ] **Step 4: Run tests to verify they pass**
 
 ```bash
-cd /home/ubuntu/feishu-kiro-bot && python3 -m pytest tests/test_dashboard_config_store.py -v
+cd /home/ubuntu/kiro-devops && python3 -m pytest tests/test_dashboard_config_store.py -v
 ```
 
 Expected: PASS
@@ -426,7 +426,7 @@ Expected: PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-cd /home/ubuntu/feishu-kiro-bot && git add dashboard/config_store.py tests/test_dashboard_config_store.py && git commit -m "feat(dashboard): add config store for env and mappings"
+cd /home/ubuntu/kiro-devops && git add dashboard/config_store.py tests/test_dashboard_config_store.py && git commit -m "feat(dashboard): add config store for env and mappings"
 ```
 
 ---
@@ -483,7 +483,7 @@ def test_post_mappings(client):
 - [ ] **Step 2: Run test to verify it fails**
 
 ```bash
-cd /home/ubuntu/feishu-kiro-bot && python3 -m pytest tests/test_dashboard_api.py -v
+cd /home/ubuntu/kiro-devops && python3 -m pytest tests/test_dashboard_api.py -v
 ```
 
 Expected: FAIL with route not found
@@ -553,7 +553,7 @@ def post_mappings():
 - [ ] **Step 4: Run tests to verify they pass**
 
 ```bash
-cd /home/ubuntu/feishu-kiro-bot && python3 -m pytest tests/test_dashboard_api.py -v
+cd /home/ubuntu/kiro-devops && python3 -m pytest tests/test_dashboard_api.py -v
 ```
 
 Expected: PASS
@@ -561,7 +561,7 @@ Expected: PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-cd /home/ubuntu/feishu-kiro-bot && git add dashboard/api.py tests/test_dashboard_api.py && git commit -m "feat(dashboard): add API routes for agents, skills, config, mappings"
+cd /home/ubuntu/kiro-devops && git add dashboard/api.py tests/test_dashboard_api.py && git commit -m "feat(dashboard): add API routes for agents, skills, config, mappings"
 ```
 
 ---
@@ -618,7 +618,7 @@ def test_events_crud(client):
 - [ ] **Step 2: Run test to verify it fails**
 
 ```bash
-cd /home/ubuntu/feishu-kiro-bot && python3 -m pytest tests/test_dashboard_api_events.py -v
+cd /home/ubuntu/kiro-devops && python3 -m pytest tests/test_dashboard_api_events.py -v
 ```
 
 Expected: FAIL
@@ -687,7 +687,7 @@ def delete_event(event_id):
 - [ ] **Step 4: Run tests to verify they pass**
 
 ```bash
-cd /home/ubuntu/feishu-kiro-bot && python3 -m pytest tests/test_dashboard_api_events.py -v
+cd /home/ubuntu/kiro-devops && python3 -m pytest tests/test_dashboard_api_events.py -v
 ```
 
 Expected: PASS
@@ -695,7 +695,7 @@ Expected: PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-cd /home/ubuntu/feishu-kiro-bot && git add dashboard/api.py tests/test_dashboard_api_events.py && git commit -m "feat(dashboard): add event CRUD API routes"
+cd /home/ubuntu/kiro-devops && git add dashboard/api.py tests/test_dashboard_api_events.py && git commit -m "feat(dashboard): add event CRUD API routes"
 ```
 
 ---
@@ -754,7 +754,7 @@ def test_scheduler_crud(client):
 - [ ] **Step 2: Run test to verify it fails**
 
 ```bash
-cd /home/ubuntu/feishu-kiro-bot && python3 -m pytest tests/test_dashboard_api_scheduler.py -v
+cd /home/ubuntu/kiro-devops && python3 -m pytest tests/test_dashboard_api_scheduler.py -v
 ```
 
 Expected: FAIL
@@ -817,7 +817,7 @@ def delete_scheduler(job_id):
 - [ ] **Step 4: Run tests to verify they pass**
 
 ```bash
-cd /home/ubuntu/feishu-kiro-bot && python3 -m pytest tests/test_dashboard_api_scheduler.py -v
+cd /home/ubuntu/kiro-devops && python3 -m pytest tests/test_dashboard_api_scheduler.py -v
 ```
 
 Expected: PASS
@@ -825,7 +825,7 @@ Expected: PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-cd /home/ubuntu/feishu-kiro-bot && git add dashboard/api.py tests/test_dashboard_api_scheduler.py && git commit -m "feat(dashboard): add scheduler CRUD API routes"
+cd /home/ubuntu/kiro-devops && git add dashboard/api.py tests/test_dashboard_api_scheduler.py && git commit -m "feat(dashboard): add scheduler CRUD API routes"
 ```
 
 ---
@@ -844,7 +844,7 @@ cd /home/ubuntu/feishu-kiro-bot && git add dashboard/api.py tests/test_dashboard
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>feishu-kiro-bot Dashboard</title>
+<title>kiro-devops Dashboard</title>
 <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 <script src="https://unpkg.com/vue-router@4/dist/vue-router.global.js"></script>
 <link rel="stylesheet" href="/dashboard/static/style.css">
@@ -923,7 +923,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 - [ ] **Step 3: Verify by opening in browser (manual check)**
 
 ```bash
-cd /home/ubuntu/feishu-kiro-bot && python3 -c "
+cd /home/ubuntu/kiro-devops && python3 -c "
 from flask import Flask
 from dashboard import dashboard_bp
 import os
@@ -933,7 +933,7 @@ app.register_blueprint(dashboard_bp)
 with app.test_client() as c:
     r = c.get('/dashboard/')
     print('status:', r.status_code)
-    assert b'feishu-kiro-bot Dashboard' in r.data
+    assert b'kiro-devops Dashboard' in r.data
     print('HTML shell OK')
 "
 ```
@@ -943,7 +943,7 @@ Expected: status 200, HTML shell OK
 - [ ] **Step 4: Commit**
 
 ```bash
-cd /home/ubuntu/feishu-kiro-bot && git add dashboard/static/index.html dashboard/static/style.css && git commit -m "feat(dashboard): add frontend HTML shell and CSS"
+cd /home/ubuntu/kiro-devops && git add dashboard/static/index.html dashboard/static/style.css && git commit -m "feat(dashboard): add frontend HTML shell and CSS"
 ```
 
 ---
@@ -1288,7 +1288,7 @@ createApp(App).use(router).mount("#app");
 - [ ] **Step 2: Verify frontend loads**
 
 ```bash
-cd /home/ubuntu/feishu-kiro-bot && python3 -c "
+cd /home/ubuntu/kiro-devops && python3 -c "
 from flask import Flask
 from dashboard import dashboard_bp
 import os
@@ -1311,7 +1311,7 @@ Expected: app.js status 200, app.js OK
 - [ ] **Step 3: Commit**
 
 ```bash
-cd /home/ubuntu/feishu-kiro-bot && git add dashboard/static/app.js && git commit -m "feat(dashboard): add Vue 3 SPA frontend with all pages"
+cd /home/ubuntu/kiro-devops && git add dashboard/static/app.js && git commit -m "feat(dashboard): add Vue 3 SPA frontend with all pages"
 ```
 
 ---
@@ -1339,7 +1339,7 @@ def test_dashboard_routes_registered():
 - [ ] **Step 2: Run test to verify it fails**
 
 ```bash
-cd /home/ubuntu/feishu-kiro-bot && python3 -m pytest tests/test_dashboard_integration.py -v
+cd /home/ubuntu/kiro-devops && python3 -m pytest tests/test_dashboard_integration.py -v
 ```
 
 Expected: FAIL
@@ -1382,7 +1382,7 @@ except ImportError:
 - [ ] **Step 4: Run tests to verify they pass**
 
 ```bash
-cd /home/ubuntu/feishu-kiro-bot && python3 -m pytest tests/test_dashboard_integration.py -v
+cd /home/ubuntu/kiro-devops && python3 -m pytest tests/test_dashboard_integration.py -v
 ```
 
 Expected: PASS
@@ -1390,7 +1390,7 @@ Expected: PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-cd /home/ubuntu/feishu-kiro-bot && git add app.py tests/test_dashboard_integration.py && git commit -m "feat(dashboard): integrate blueprint into app.py"
+cd /home/ubuntu/kiro-devops && git add app.py tests/test_dashboard_integration.py && git commit -m "feat(dashboard): integrate blueprint into app.py"
 ```
 
 ---
@@ -1412,7 +1412,7 @@ Add to the bottom of `.env.example`:
 - [ ] **Step 2: Commit**
 
 ```bash
-cd /home/ubuntu/feishu-kiro-bot && git add .env.example && git commit -m "chore: add DASHBOARD_TOKEN to .env.example"
+cd /home/ubuntu/kiro-devops && git add .env.example && git commit -m "chore: add DASHBOARD_TOKEN to .env.example"
 ```
 
 ---
@@ -1424,7 +1424,7 @@ cd /home/ubuntu/feishu-kiro-bot && git add .env.example && git commit -m "chore:
 - [ ] **Step 1: Run all dashboard tests together**
 
 ```bash
-cd /home/ubuntu/feishu-kiro-bot && python3 -m pytest tests/test_dashboard_*.py -v
+cd /home/ubuntu/kiro-devops && python3 -m pytest tests/test_dashboard_*.py -v
 ```
 
 Expected: All PASS
@@ -1432,7 +1432,7 @@ Expected: All PASS
 - [ ] **Step 2: Restart service and verify in browser**
 
 ```bash
-sudo systemctl restart feishu-kiro-bot.service
+sudo systemctl restart kiro-devops.service
 sleep 2
 curl -s http://127.0.0.1:8080/dashboard/ | head -5
 curl -s http://127.0.0.1:8080/api/dashboard/health 2>/dev/null || curl -s http://127.0.0.1:8080/health
@@ -1443,7 +1443,7 @@ Expected: HTML returned, health check 200
 - [ ] **Step 3: Commit any final fixes and push**
 
 ```bash
-cd /home/ubuntu/feishu-kiro-bot && git push origin main
+cd /home/ubuntu/kiro-devops && git push origin main
 ```
 
 ---

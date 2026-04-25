@@ -49,7 +49,7 @@ GROUP_AT_ONLY = os.environ.get("GROUP_AT_ONLY", "true").lower() in ("true", "1",
 
 # ============ 日志 ============
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
-log = logging.getLogger("feishu-kiro")
+log = logging.getLogger("kiro-devops")
 
 # 去重
 _processed = set()

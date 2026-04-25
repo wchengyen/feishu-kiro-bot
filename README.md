@@ -4,7 +4,7 @@
   <img src="kiro2.jpg" alt="Kiro Bot" width="180">
 </p>
 
-[![DeepWiki](https://img.shields.io/badge/DeepWiki-AI%20文档-blue)](https://deepwiki.com/wchengyen/feishu-kiro-bot)
+[![DeepWiki](https://img.shields.io/badge/DeepWiki-AI%20文档-blue)](https://deepwiki.com/wchengyen/kiro-devops)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
@@ -18,7 +18,7 @@
 
 ## 📖 AI 生成的交互式文档
 
-👉 **[https://deepwiki.com/wchengyen/feishu-kiro-bot](https://deepwiki.com/wchengyen/feishu-kiro-bot)**
+👉 **[https://deepwiki.com/wchengyen/kiro-devops](https://deepwiki.com/wchengyen/kiro-devops)**
 
 由 [DeepWiki](https://deepwiki.com) 自动生成的交互式 Wiki，包含架构图、代码分析、数据流可视化和智能问答。
 
@@ -115,7 +115,7 @@
 ### 2. 配置本服务
 
 ```bash
-cd /home/ubuntu/feishu-kiro-bot
+cd /home/ubuntu/kiro-devops
 cp .env.example .env
 # 编辑 .env，填入 FEISHU_APP_ID 和 FEISHU_APP_SECRET
 ```
@@ -137,16 +137,16 @@ cp .env.example .env
 ./start.sh
 
 # systemd 后台（生产）
-sudo cp feishu-kiro-bot.service /etc/systemd/system/
+sudo cp kiro-devops.service /etc/systemd/system/
 sudo systemctl daemon-reload
-sudo systemctl enable feishu-kiro-bot
-sudo systemctl start feishu-kiro-bot
+sudo systemctl enable kiro-devops
+sudo systemctl start kiro-devops
 ```
 
 ### 4. 查看日志
 
 ```bash
-sudo journalctl -u feishu-kiro-bot -f
+sudo journalctl -u kiro-devops -f
 ```
 
 ---
@@ -208,7 +208,7 @@ sudo journalctl -u feishu-kiro-bot -f
 ```
 ┌─────────────────┐     webhook POST      ┌─────────────────┐
 │  Prometheus     │ ─────────────────────>│                 │
-│  Alertmanager   │   Bearer Token + JSON │  feishu-kiro-bot│
+│  Alertmanager   │   Bearer Token + JSON │  kiro-devops│
 │  (or CloudWatch │                       │   :8080/event   │
 │   via Lambda)   │                       │                 │
 └─────────────────┘                       └────────┬────────┘
@@ -267,10 +267,10 @@ route:
   group_wait: 10s
   group_interval: 10s
   repeat_interval: 1h
-  receiver: 'feishu-kiro-bot'
+  receiver: 'kiro-devops'
 
 receivers:
-  - name: 'feishu-kiro-bot'
+  - name: 'kiro-devops'
     webhook_configs:
       - url: 'http://bot.internal:8080/event'
         http_config:
