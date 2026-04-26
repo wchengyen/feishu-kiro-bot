@@ -1,3 +1,4 @@
+import calendar
 import os
 import sqlite3
 from datetime import datetime, timedelta
@@ -167,10 +168,10 @@ class MetricsStore:
                 """
                 SELECT value FROM hourly_metrics
                 WHERE resource_id = ? AND metric_name = ?
-                  AND date(timestamp, 'unixepoch') = ?
+                  AND date(timestamp, 'unixepoch') = ? AND region = ?
                 ORDER BY value
                 """,
-                (resource_id, metric_name, dt),
+                (resource_id, metric_name, dt, region),
             )
             values = [r[0] for r in p95_cursor.fetchall()]
             p95_val = values[int(len(values) * 0.95)] if values else 0.0
@@ -245,7 +246,7 @@ class MetricsStore:
         if granularity == "hourly":
             data = self.query_hourly(
                 resource_id, metric_name,
-                int(start.timestamp()), int(now.timestamp()),
+                int(calendar.timegm(start.timetuple())), int(calendar.timegm(now.timetuple())),
             )
             values = [d["value"] for d in data if d["value"] is not None]
             stats = self._compute_stats(values)
@@ -255,7 +256,7 @@ class MetricsStore:
                 start.strftime("%Y-%m-%d"), now.strftime("%Y-%m-%d"),
             )
             data = [
-                {"timestamp": int(datetime.strptime(d["date"], "%Y-%m-%d").timestamp()), "value": d["avg_value"]}
+                {"timestamp": int(calendar.timegm(datetime.strptime(d["date"], "%Y-%m-%d").timetuple())), "value": d["avg_value"]}
                 for d in data_raw
             ]
             values = [d["avg_value"] for d in data_raw]
