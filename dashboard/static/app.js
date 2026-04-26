@@ -582,22 +582,23 @@ const ResourcesPage = {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="r in filteredResources" :key="r.id" :class="{ pinned: isPinned(r.id) }">
-              <td><button class="pin-btn" @click="togglePin(r.id)">{{ isPinned(r.id) ? '★' : '☆' }}</button></td>
-              <td>{{ r.name }}</td>
-              <td><span :class="'badge badge-' + r.type">{{ r.type }}</span></td>
-              <td>{{ r.meta.region || '-' }}</td>
-              <td>{{ r.type === 'ec2' ? (r.meta.instance_type || '-') : (r.meta.db_instance_class || '-') }}</td>
-              <td>{{ r.type === 'ec2' ? (r.meta.os || '-') : (r.meta.engine || '-') }}</td>
-              <td><code class="tag">{{ r.raw_id }}</code></td>
-              <td>{{ r.status }}</td>
-              <td v-html="sparklineSvg(r.sparkline, sparklineColor(r.type))"></td>
-              <td>{{ formatStats(r.stats_7d) }}</td>
-              <td>{{ formatStats(r.stats_30d) }}</td>
-              <td><button class="pin-btn" @click="toggleExpand(r.id)">{{ expandedId === r.id ? '▼' : '▶' }}</button></td>
-            </tr>
-            <tr v-if="expandedId === r.id" :key="r.id + '-history'">
-              <td colspan="13" style="background:#f8fafc;padding:16px">
+            <template v-for="r in filteredResources" :key="r.id">
+              <tr :class="{ pinned: isPinned(r.id) }">
+                <td><button class="pin-btn" @click="togglePin(r.id)">{{ isPinned(r.id) ? '★' : '☆' }}</button></td>
+                <td>{{ r.name }}</td>
+                <td><span :class="'badge badge-' + r.type">{{ r.type }}</span></td>
+                <td>{{ r.meta.region || '-' }}</td>
+                <td>{{ r.type === 'ec2' ? (r.meta.instance_type || '-') : (r.meta.db_instance_class || '-') }}</td>
+                <td>{{ r.type === 'ec2' ? (r.meta.os || '-') : (r.meta.engine || '-') }}</td>
+                <td><code class="tag">{{ r.raw_id }}</code></td>
+                <td>{{ r.status }}</td>
+                <td v-html="sparklineSvg(r.sparkline, sparklineColor(r.type))"></td>
+                <td>{{ formatStats(r.stats_7d) }}</td>
+                <td>{{ formatStats(r.stats_30d) }}</td>
+                <td><button class="pin-btn" @click="toggleExpand(r.id)">{{ expandedId === r.id ? '▼' : '▶' }}</button></td>
+              </tr>
+              <tr v-if="expandedId === r.id">
+                <td colspan="12" style="background:#f8fafc;padding:16px">
                 <div style="max-width:800px">
                   <div style="display:flex;gap:8px;margin-bottom:12px">
                     <button
@@ -626,7 +627,8 @@ const ResourcesPage = {
                 </div>
               </td>
             </tr>
-            <tr v-if="filteredResources.length === 0"><td colspan="13" class="empty">暂无数据</td></tr>
+            </template>
+            <tr v-if="filteredResources.length === 0"><td colspan="12" class="empty">暂无数据</td></tr>
           </tbody>
         </table>
       </div>
