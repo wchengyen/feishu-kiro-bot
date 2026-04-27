@@ -17,6 +17,14 @@ def _aggregated_db_path(base_dir: str | None = None) -> str:
     return os.path.join(d, "aggregated_metrics.db")
 
 
+def _ensure_provider_column(conn: sqlite3.Connection, table_name: str):
+    cursor = conn.execute(f"PRAGMA table_info({table_name})")
+    columns = [row[1] for row in cursor.fetchall()]
+    if "provider" not in columns:
+        conn.execute(f"ALTER TABLE {table_name} ADD COLUMN provider TEXT DEFAULT 'aws'")
+        conn.commit()
+
+
 def _ensure_hourly_table(conn: sqlite3.Connection):
     conn.execute(
         """
@@ -36,6 +44,7 @@ def _ensure_hourly_table(conn: sqlite3.Connection):
         "CREATE INDEX IF NOT EXISTS idx_hourly_lookup ON hourly_metrics(resource_id, metric_name, timestamp)"
     )
     conn.commit()
+    _ensure_provider_column(conn, "hourly_metrics")
 
 
 def _ensure_daily_table(conn: sqlite3.Connection):
@@ -59,14 +68,42 @@ def _ensure_daily_table(conn: sqlite3.Connection):
         "CREATE INDEX IF NOT EXISTS idx_daily_lookup ON daily_aggregated(resource_id, metric_name, date)"
     )
     conn.commit()
+    _ensure_provider_column(conn, "daily_aggregated")
+
+
+def _extract_provider(resource_id: str) -> str:
+    if resource_id.startswith("aws:"):
+        return "aws"
+    elif resource_id.startswith("tencent:"):
+        return "tencent"
+    return "aws"
 
 
 class MetricsStore:
     def __init__(self, base_dir: str | None = None):
+        if base_dir and base_dir.endswith(".db"):
+            base_dir = os.path.dirname(base_dir)
         self.base_dir = base_dir or DEFAULT_BASE_DIR
         os.makedirs(self.base_dir, exist_ok=True)
         self._raw_conns: dict[str, sqlite3.Connection] = {}
         self._agg_connection: sqlite3.Connection | None = None
+        self._migrate_existing_dbs()
+
+    def _migrate_existing_dbs(self):
+        """Eagerly migrate provider column into existing DB files."""
+        agg_path = _aggregated_db_path(self.base_dir)
+        if os.path.exists(agg_path):
+            conn = sqlite3.connect(agg_path)
+            _ensure_provider_column(conn, "daily_aggregated")
+            conn.close()
+
+        if not os.path.isdir(self.base_dir):
+            return
+        for fname in os.listdir(self.base_dir):
+            if fname.startswith("raw_metrics_") and fname.endswith(".db"):
+                conn = sqlite3.connect(os.path.join(self.base_dir, fname))
+                _ensure_provider_column(conn, "hourly_metrics")
+                conn.close()
 
     def _raw_conn(self, year: int, month: int) -> sqlite3.Connection:
         key = f"{year}_{month:02d}"
@@ -84,6 +121,27 @@ class MetricsStore:
             _ensure_daily_table(conn)
             self._agg_connection = conn
         return self._agg_connection
+
+    def write_raw(self, provider="aws", timestamp=None, resource_id=None, metric=None, value=None):
+        """Write a single raw metric point."""
+        if timestamp is None or resource_id is None or metric is None or value is None:
+            raise ValueError("timestamp, resource_id, metric, and value are required")
+        dt = timestamp if isinstance(timestamp, datetime) else datetime.utcfromtimestamp(timestamp)
+        parts = resource_id.split(":")
+        region = parts[2] if len(parts) >= 3 else None
+        conn = self._raw_conn(dt.year, dt.month)
+        conn.execute(
+            """
+            INSERT INTO hourly_metrics (resource_id, metric_name, timestamp, value, region, provider)
+            VALUES (?, ?, ?, ?, ?, ?)
+            ON CONFLICT(resource_id, metric_name, timestamp) DO UPDATE SET
+                value=excluded.value,
+                region=excluded.region,
+                provider=excluded.provider
+            """,
+            (resource_id, metric, int(calendar.timegm(dt.timetuple())), value, region, provider),
+        )
+        conn.commit()
 
     def write_hourly(self, records: list[tuple]):
         """Bulk insert hourly records with UPSERT.
@@ -114,8 +172,10 @@ class MetricsStore:
             )
             conn.commit()
 
-    def query_hourly(self, resource_id: str, metric_name: str, start_ts: int, end_ts: int) -> list[dict]:
+    def query_hourly(self, resource_id: str, metric_name: str, start_ts: int, end_ts: int, provider: str | None = None) -> list[dict]:
         """Query hourly data across one or two monthly DBs."""
+        if provider is None:
+            provider = _extract_provider(resource_id)
         start_dt = datetime.utcfromtimestamp(start_ts)
         end_dt = datetime.utcfromtimestamp(end_ts)
         months = []
@@ -133,10 +193,10 @@ class MetricsStore:
             cursor = conn.execute(
                 """
                 SELECT timestamp, value FROM hourly_metrics
-                WHERE resource_id = ? AND metric_name = ? AND timestamp >= ? AND timestamp <= ?
+                WHERE resource_id = ? AND metric_name = ? AND timestamp >= ? AND timestamp <= ? AND provider = ?
                 ORDER BY timestamp
                 """,
-                (resource_id, metric_name, start_ts, end_ts),
+                (resource_id, metric_name, start_ts, end_ts, provider),
             )
             for row in cursor.fetchall():
                 results.append({"timestamp": row[0], "value": row[1]})
@@ -147,11 +207,11 @@ class MetricsStore:
         conn = self._raw_conn(year, month)
         cursor = conn.execute(
             """
-            SELECT resource_id, metric_name, date(timestamp, 'unixepoch') as dt,
+            SELECT resource_id, metric_name, provider, date(timestamp, 'unixepoch') as dt,
                    MIN(value), AVG(value), MAX(value), region
             FROM hourly_metrics
             WHERE strftime('%Y-%m', datetime(timestamp, 'unixepoch')) = ?
-            GROUP BY resource_id, metric_name, date(timestamp, 'unixepoch'), region
+            GROUP BY resource_id, metric_name, provider, date(timestamp, 'unixepoch'), region
             ORDER BY resource_id, metric_name, dt
             """,
             (f"{year}-{month:02d}",),
@@ -162,46 +222,49 @@ class MetricsStore:
 
         agg_conn = self._agg_conn()
         inserted = 0
-        for resource_id, metric_name, dt, min_val, avg_val, max_val, region in rows:
+        for resource_id, metric_name, provider, dt, min_val, avg_val, max_val, region in rows:
             # Compute p95 from raw values
             p95_cursor = conn.execute(
                 """
                 SELECT value FROM hourly_metrics
-                WHERE resource_id = ? AND metric_name = ?
+                WHERE resource_id = ? AND metric_name = ? AND provider = ?
                   AND date(timestamp, 'unixepoch') = ? AND region = ?
                 ORDER BY value
                 """,
-                (resource_id, metric_name, dt, region),
+                (resource_id, metric_name, provider, dt, region),
             )
             values = [r[0] for r in p95_cursor.fetchall()]
             p95_val = values[int(len(values) * 0.95)] if values else 0.0
 
             agg_conn.execute(
                 """
-                INSERT INTO daily_aggregated (resource_id, metric_name, date, min_value, avg_value, p95_value, max_value, region)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO daily_aggregated (resource_id, metric_name, date, min_value, avg_value, p95_value, max_value, region, provider)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(resource_id, metric_name, date) DO UPDATE SET
                     min_value=excluded.min_value,
                     avg_value=excluded.avg_value,
                     p95_value=excluded.p95_value,
                     max_value=excluded.max_value,
-                    region=excluded.region
+                    region=excluded.region,
+                    provider=excluded.provider
                 """,
-                (resource_id, metric_name, dt, min_val, round(avg_val, 2), round(p95_val, 2), max_val, region),
+                (resource_id, metric_name, dt, min_val, round(avg_val, 2), round(p95_val, 2), max_val, region, provider),
             )
             inserted += 1
         agg_conn.commit()
         return inserted
 
-    def query_daily(self, resource_id: str, metric_name: str, start_date: str, end_date: str) -> list[dict]:
+    def query_daily(self, resource_id: str, metric_name: str, start_date: str, end_date: str, provider: str | None = None) -> list[dict]:
+        if provider is None:
+            provider = _extract_provider(resource_id)
         conn = self._agg_conn()
         cursor = conn.execute(
             """
             SELECT date, min_value, avg_value, p95_value, max_value FROM daily_aggregated
-            WHERE resource_id = ? AND metric_name = ? AND date >= ? AND date <= ?
+            WHERE resource_id = ? AND metric_name = ? AND date >= ? AND date <= ? AND provider = ?
             ORDER BY date
             """,
-            (resource_id, metric_name, start_date, end_date),
+            (resource_id, metric_name, start_date, end_date, provider),
         )
         return [
             {
@@ -227,6 +290,7 @@ class MetricsStore:
 
     def query_history(self, resource_id: str, metric_name: str, range_label: str) -> dict:
         """Unified history query. range_label: 24h, 7d, 30d, 180d."""
+        provider = _extract_provider(resource_id)
         now = datetime.utcnow()
         if range_label == "24h":
             start = now - timedelta(hours=24)
@@ -247,6 +311,7 @@ class MetricsStore:
             data = self.query_hourly(
                 resource_id, metric_name,
                 int(calendar.timegm(start.timetuple())), int(calendar.timegm(now.timetuple())),
+                provider=provider,
             )
             values = [d["value"] for d in data if d["value"] is not None]
             stats = self._compute_stats(values)
@@ -254,6 +319,7 @@ class MetricsStore:
             data_raw = self.query_daily(
                 resource_id, metric_name,
                 start.strftime("%Y-%m-%d"), now.strftime("%Y-%m-%d"),
+                provider=provider,
             )
             data = [
                 {"timestamp": int(calendar.timegm(datetime.strptime(d["date"], "%Y-%m-%d").timetuple())), "value": d["avg_value"]}
