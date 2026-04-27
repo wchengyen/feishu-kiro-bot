@@ -99,7 +99,11 @@ def discover_all():
 
 def get_cloudwatch_metrics(resource_id, namespace, dimension_name, days=7, region=None):
     provider = AWSProvider()
-    return provider._get_cloudwatch_points(resource_id, namespace, dimension_name, days, region)
+    points = provider._fetch_cloudwatch_datapoints(resource_id, namespace, dimension_name, days, region)
+    return [
+        {"Timestamp": p["Timestamp"], "Average": p["Average"], "Maximum": p["Maximum"]}
+        for p in points
+    ]
 
 
 def compute_stats(points):

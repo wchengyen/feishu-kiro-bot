@@ -119,6 +119,27 @@ class AWSProvider(BaseResourceProvider):
             )
         return resources
 
+    def _fetch_cloudwatch_datapoints(
+        self, resource_id: str, namespace: str, dimension_name: str, days: int = 7, region: str | None = None
+    ) -> list[dict]:
+        """Fetch raw CloudWatch Datapoints (with Average and Maximum)."""
+        if boto3 is None:
+            return []
+        kwargs = {"region_name": region} if region else {}
+        client = boto3.client("cloudwatch", **kwargs)
+        end = datetime.datetime.utcnow()
+        start = end - datetime.timedelta(days=days)
+        resp = client.get_metric_statistics(
+            Namespace=namespace,
+            MetricName="CPUUtilization",
+            Dimensions=[{"Name": dimension_name, "Value": resource_id}],
+            StartTime=start,
+            EndTime=end,
+            Period=3600,
+            Statistics=["Average", "Maximum"],
+        )
+        return sorted(resp.get("Datapoints", []), key=lambda x: x["Timestamp"])
+
     def get_metrics(self, resource: Resource, range_days: int = 7) -> ResourceMetrics:
         if boto3 is None:
             return ResourceMetrics(
@@ -142,19 +163,9 @@ class AWSProvider(BaseResourceProvider):
                 points_30d=[],
             )
 
-        client = boto3.client("cloudwatch", region_name=resource.region)
-        end = datetime.datetime.utcnow()
-        start = end - datetime.timedelta(days=range_days)
-        resp = client.get_metric_statistics(
-            Namespace=namespace,
-            MetricName="CPUUtilization",
-            Dimensions=[{"Name": dimension_name, "Value": resource.id}],
-            StartTime=start,
-            EndTime=end,
-            Period=3600,
-            Statistics=["Average", "Maximum"],
+        points = self._fetch_cloudwatch_datapoints(
+            resource.id, namespace, dimension_name, range_days, resource.region
         )
-        points = sorted(resp.get("Datapoints", []), key=lambda x: x["Timestamp"])
         metric_points = [
             MetricPoint(timestamp=p["Timestamp"], value=p["Average"])
             for p in points
@@ -168,7 +179,8 @@ class AWSProvider(BaseResourceProvider):
         sparkline = [round(sum(v) / len(v), 1) for v in daily.values()]
         current = sparkline[-1] if sparkline else None
 
-        averages = [p.value for p in metric_points]
+        averages = [p["Average"] for p in points]
+        maxima = [p["Maximum"] for p in points]
         if averages:
             sorted_avgs = sorted(averages)
             idx = int(len(sorted_avgs) * 0.95)
@@ -176,7 +188,7 @@ class AWSProvider(BaseResourceProvider):
             stats = {
                 "avg": round(sum(averages) / len(averages), 1),
                 "p95": round(p95_val, 1),
-                "max": round(max(averages), 1),
+                "max": round(max(maxima), 1),
             }
         else:
             stats = {"avg": None, "p95": None, "max": None}
@@ -215,45 +227,4 @@ class AWSProvider(BaseResourceProvider):
                         ts = ts // 3600 * 3600
                         records.append((resource.unique_id, "CPUUtilization", ts, round(p.value, 2), resource.region))
                     if records:
-                        if hasattr(store, "write_hourly"):
-                            store.write_hourly(records)
-                        elif hasattr(store, "write_raw"):
-                            for r in records:
-                                store.write_raw(
-                                    provider="aws",
-                                    timestamp=datetime.datetime.utcfromtimestamp(r[2]),
-                                    resource_id=r[0],
-                                    metric="cpu_utilization",
-                                    value=r[3],
-                                )
-
-    def _get_cloudwatch_points(
-        self, resource_id: str, namespace: str, dimension_name: str, days: int = 7, region: str | None = None
-    ) -> list[dict]:
-        """Fetch CloudWatch metrics in legacy format (with Average and Maximum)."""
-        try:
-            import boto3 as _boto3
-        except ImportError:
-            return []
-        kwargs = {"region_name": region} if region else {}
-        client = _boto3.client("cloudwatch", **kwargs)
-        end = datetime.datetime.utcnow()
-        start = end - datetime.timedelta(days=days)
-        resp = client.get_metric_statistics(
-            Namespace=namespace,
-            MetricName="CPUUtilization",
-            Dimensions=[{"Name": dimension_name, "Value": resource_id}],
-            StartTime=start,
-            EndTime=end,
-            Period=3600,
-            Statistics=["Average", "Maximum"],
-        )
-        points = sorted(resp.get("Datapoints", []), key=lambda x: x["Timestamp"])
-        return [
-            {
-                "Timestamp": p["Timestamp"],
-                "Average": p["Average"],
-                "Maximum": p["Maximum"],
-            }
-            for p in points
-        ]
+                        store.write_hourly(records)
