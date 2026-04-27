@@ -1,6 +1,7 @@
 import json
 import os
 import subprocess
+import tempfile
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
@@ -17,8 +18,13 @@ def _load_config():
 
 def _tccli(service: str, action: str, region: str, payload: Optional[Dict] = None) -> Dict[str, Any]:
     cmd = ["tccli", service, action, "--region", region, "--output", "json"]
+    temp_path = None
     if payload:
-        cmd.extend(["--cli-input-json", json.dumps(payload)])
+        # tccli --cli-input-json requires file:// prefix
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            json.dump(payload, f)
+            temp_path = f.name
+        cmd.extend(["--cli-input-json", f"file://{temp_path}"])
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, check=True, timeout=60)
         return json.loads(result.stdout)
@@ -28,6 +34,9 @@ def _tccli(service: str, action: str, region: str, payload: Optional[Dict] = Non
         raise RuntimeError(f"tccli failed: {e.stderr}")
     except json.JSONDecodeError as e:
         raise RuntimeError(f"tccli returned invalid JSON: {e}")
+    finally:
+        if temp_path and os.path.exists(temp_path):
+            os.unlink(temp_path)
 
 
 class TencentProvider(BaseResourceProvider):
@@ -101,8 +110,8 @@ class TencentProvider(BaseResourceProvider):
             "MetricName": "CPUUsage",
             "Instances": [{"Dimensions": [{"Name": "InstanceId", "Value": resource.id}]}],
             "Period": 3600,
-            "StartTime": start.isoformat(),
-            "EndTime": end.isoformat(),
+            "StartTime": start.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "EndTime": end.strftime("%Y-%m-%dT%H:%M:%SZ"),
         }
         data = _tccli("monitor", "GetMonitorData", resource.region, payload)
         points = []
