@@ -511,3 +511,176 @@ tr.pinned:hover td { background: #f1f5f9; }
   max-height: 60vh;
   overflow-y: auto;
 }
+
+/* ===== Persona Cards (Agents) ===== */
+.persona-card {
+  border-left: 4px solid;
+  padding: 18px;
+}
+.persona-header {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+.persona-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 3px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.persona-emoji {
+  font-size: 28px;
+  line-height: 1;
+}
+.persona-info {
+  flex: 1;
+  min-width: 0;
+}
+.persona-info h4 {
+  font-size: 16px;
+  margin-bottom: 2px;
+  font-weight: 700;
+  color: #0f172a;
+}
+.persona-title {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  padding: 2px 8px;
+  border-radius: 999px;
+  margin-bottom: 6px;
+}
+.persona-tools {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.tool-badge {
+  font-size: 11px;
+  font-weight: 500;
+  color: #475569;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+.tool-badge.empty {
+  color: #94a3b8;
+  background: transparent;
+  border-style: dashed;
+}
+.persona-stats {
+  margin-top: 12px;
+}
+.stat-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.stat-label {
+  color: #64748b;
+  font-weight: 600;
+  width: 36px;
+  flex-shrink: 0;
+}
+.stat-bar-bg {
+  flex: 1;
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 999px;
+  overflow: hidden;
+}
+.stat-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+.stat-num {
+  color: #0f172a;
+  font-weight: 700;
+  width: 20px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ===== Book Cards (Skills) ===== */
+.book-card {
+  display: flex;
+  padding: 0;
+  overflow: hidden;
+  background: #faf8f5;
+  border: 1px solid #e8e4df;
+  border-left: 6px solid;
+  transition: box-shadow 0.2s, transform 0.15s ease;
+}
+.book-card:hover {
+  box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+  transform: translateY(-3px);
+}
+.book-spine {
+  width: 6px;
+  flex-shrink: 0;
+}
+.book-content {
+  padding: 18px;
+  flex: 1;
+  min-width: 0;
+}
+.book-content h4 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #2d1b0e;
+  margin-bottom: 6px;
+  font-family: Georgia, "Times New Roman", serif;
+  letter-spacing: 0.01em;
+}
+.book-desc {
+  font-size: 13px;
+  color: #5c4d3c;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+.book-triggers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.bookmark-tag {
+  font-size: 11px;
+  font-weight: 600;
+  color: #92400e;
+  background: linear-gradient(180deg, #fef3c7, #fde68a);
+  padding: 3px 10px;
+  border-radius: 0 6px 6px 0;
+  position: relative;
+  box-shadow: 1px 1px 2px rgba(0,0,0,0.06);
+}
+.bookmark-tag::before {
+  content: "";
+  position: absolute;
+  left: -6px;
+  top: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 0 10px 6px;
+  border-color: transparent transparent #d97706 transparent;
+  opacity: 0.5;
+}
+.bookmark-tag.empty {
+  color: #a8a29e;
+  background: #f5f5f4;
+}

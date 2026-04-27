@@ -25,6 +25,39 @@ async function api(path, opts = {}) {
   return data;
 }
 
+/* ---------- Visual Helpers ---------- */
+const AGENT_EMOJIS = ['🤖', '🕵️', '🧙‍♂️', '👨‍💻', '👩‍🔬', '🦸', '🧑‍🚀', '🧑‍⚕️', '🧑‍🌾', '🧑‍🔬'];
+
+function simpleHash(str) {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) {
+    h = ((h << 5) - h) + str.charCodeAt(i);
+    h |= 0;
+  }
+  return Math.abs(h);
+}
+
+function agentEmoji(name) {
+  return AGENT_EMOJIS[simpleHash(name) % AGENT_EMOJIS.length];
+}
+
+function agentColor(name) {
+  const h = simpleHash(name) % 360;
+  return `hsl(${h}, 70%, 60%)`;
+}
+
+function agentTitle(toolsCount) {
+  if (toolsCount === 0) return '见习者';
+  if (toolsCount === 1) return '学徒';
+  if (toolsCount <= 3) return '工匠';
+  return '大师';
+}
+
+function skillColor(name) {
+  const h = simpleHash(name) % 360;
+  return `hsl(${h}, 65%, 55%)`;
+}
+
 /* ---------- Layout ---------- */
 const AppLayout = {
   template: `
@@ -119,10 +152,10 @@ const OverviewPage = {
     <div>
       <h2 class="page-title">总览</h2>
       <div class="cards">
-        <div class="card card-accent-blue"><h3>Events</h3><div class="num">{{ counts.events }}</div></div>
-        <div class="card card-accent-green"><h3>Active Jobs</h3><div class="num">{{ counts.jobs }}</div></div>
-        <div class="card card-accent-purple"><h3>Agents</h3><div class="num">{{ counts.agents }}</div></div>
-        <div class="card card-accent-orange"><h3>Skills</h3><div class="num">{{ counts.skills }}</div></div>
+        <div class="card card-accent-blue"><h3>📊 Events</h3><div class="num">{{ counts.events }}</div></div>
+        <div class="card card-accent-green"><h3>⏰ Active Jobs</h3><div class="num">{{ counts.jobs }}</div></div>
+        <div class="card card-accent-purple"><h3>🧑‍🚀 Agents</h3><div class="num">{{ counts.agents }}</div></div>
+        <div class="card card-accent-orange"><h3>📚 Skills</h3><div class="num">{{ counts.skills }}</div></div>
       </div>
     </div>
   `,
@@ -166,14 +199,29 @@ const AgentsPage = {
     <div>
       <h2 class="page-title">Agents</h2>
       <div class="card-grid">
-        <div class="card-item" v-for="a in agents" :key="a.name">
-          <h4>{{ a.name }}</h4>
-          <p>{{ a.description || "无描述" }}</p>
-          <div class="meta">Tools: {{ (a.tools || []).join(", ") || "-" }}</div>
-          <div class="meta" style="margin-top:6px">
-            Skills:
-            <span v-for="s in a.linkedSkills" :key="s.name" class="badge badge-tag" style="margin-right:4px">{{ s.name }}</span>
-            <span v-if="!a.linkedSkills || a.linkedSkills.length === 0" style="color:#cbd5e1">-</span>
+        <div class="card-item persona-card" v-for="a in agents" :key="a.name" :style="{ borderColor: agentColor(a.name) }">
+          <div class="persona-header">
+            <div class="persona-avatar" :style="{ borderColor: agentColor(a.name), background: agentColor(a.name) + '18' }">
+              <span class="persona-emoji">{{ agentEmoji(a.name) }}</span>
+            </div>
+            <div class="persona-info">
+              <h4>{{ a.name }}</h4>
+              <span class="persona-title">{{ agentTitle((a.tools || []).length) }}</span>
+              <p>{{ a.description || "无描述" }}</p>
+            </div>
+          </div>
+          <div class="persona-tools">
+            <span class="tool-badge" v-for="t in (a.tools || [])" :key="t">{{ t }}</span>
+            <span v-if="!(a.tools || []).length" class="tool-badge empty">无工具</span>
+          </div>
+          <div class="persona-stats">
+            <div class="stat-bar-wrap">
+              <span class="stat-label">Skills</span>
+              <div class="stat-bar-bg">
+                <div class="stat-bar-fill" :style="{ width: Math.min((a.linkedSkills || []).length * 20, 100) + '%', background: agentColor(a.name) }"></div>
+              </div>
+              <span class="stat-num">{{ (a.linkedSkills || []).length }}</span>
+            </div>
           </div>
           <div class="card-actions">
             <button class="btn-outline" @click="openManageModal(a.name)">管理 Skills</button>
@@ -280,7 +328,7 @@ const AgentsPage = {
       await loadAgents();
     });
 
-    return { agents, allSkills, manageModal, openManageModal, closeManageModal, unlinkSkill, linkSkill, availableSkills };
+    return { agents, allSkills, manageModal, openManageModal, closeManageModal, unlinkSkill, linkSkill, availableSkills, agentEmoji, agentColor, agentTitle };
   }
 };
 
@@ -293,13 +341,19 @@ const SkillsPage = {
         <button @click="openModal()">新建 Skill</button>
       </div>
       <div class="card-grid">
-        <div class="card-item" v-for="s in skills" :key="s.name">
-          <h4>{{ s.name }}</h4>
-          <p>{{ s.description || "无描述" }}</p>
-          <div class="meta">Triggers: {{ (s.triggers || []).join(", ") || "-" }}</div>
-          <div class="card-actions">
-            <button class="btn-outline" @click="browse(s.name)">浏览</button>
-            <button class="btn-danger-sm" @click="remove(s.name)">删除</button>
+        <div class="card-item book-card" v-for="s in skills" :key="s.name" :style="{ borderLeftColor: skillColor(s.name) }">
+          <div class="book-spine" :style="{ background: skillColor(s.name) }"></div>
+          <div class="book-content">
+            <h4>📖 {{ s.name }}</h4>
+            <p class="book-desc">{{ s.description || "无描述" }}</p>
+            <div class="book-triggers">
+              <span v-for="t in (s.triggers || [])" :key="t" class="bookmark-tag">{{ t }}</span>
+              <span v-if="!(s.triggers || []).length" class="bookmark-tag empty">无触发器</span>
+            </div>
+            <div class="card-actions">
+              <button class="btn-outline" @click="browse(s.name)">浏览</button>
+              <button class="btn-danger-sm" @click="remove(s.name)">删除</button>
+            </div>
           </div>
         </div>
       </div>
@@ -387,7 +441,7 @@ const SkillsPage = {
     function closeBrowse() { browseModal.show = false; }
 
     onMounted(load);
-    return { skills, showModal, form, browseModal, openModal, closeModal, save, remove, browse, closeBrowse };
+    return { skills, showModal, form, browseModal, openModal, closeModal, save, remove, browse, closeBrowse, skillColor };
   }
 };
 
