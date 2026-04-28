@@ -15,6 +15,10 @@ log = logging.getLogger("adapter-feishu")
 IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp"}
 FILE_EXTS = {".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".csv", ".txt", ".zip", ".mp4", ".opus"}
 
+# 消息去重缓存（防止飞书 WS 重推导致重复处理）
+_processed_message_ids: set[str] = set()
+_MAX_MSG_ID_CACHE = 1000
+
 
 def _split_text(text: str, limit: int = 4000) -> list[str]:
     if len(text) <= limit:
@@ -73,6 +77,18 @@ class FeishuAdapter(PlatformAdapter):
         data: P2ImMessageReceiveV1
         message = data.event.message
         message_id = message.message_id
+
+        # 消息去重：飞书 WS 重连时可能重推历史事件
+        if message_id in _processed_message_ids:
+            log.info(f"忽略重复消息: {message_id}")
+            return
+        _processed_message_ids.add(message_id)
+        if len(_processed_message_ids) > _MAX_MSG_ID_CACHE:
+            # 防止内存无限增长，保留最近一半
+            half = list(_processed_message_ids)[_MAX_MSG_ID_CACHE // 2:]
+            _processed_message_ids.clear()
+            _processed_message_ids.update(half)
+
         msg_type = message.message_type
 
         if msg_type != "text":

@@ -90,7 +90,7 @@ class KiroExecutor:
         - on_async_result: 异步完成时回调（推送结果）
         - on_progress: 异步期间定期进度回调（可选）
         """
-        cmd = [kiro_bin, "chat", "--no-interactive", "-a", "--wrap", "never"]
+        cmd = [kiro_bin, "chat", "--no-interactive", "-a", "--trust-tools=execute_bash", "--wrap", "never"]
         if session_id:
             cmd.append("--resume")
         if self._agent:

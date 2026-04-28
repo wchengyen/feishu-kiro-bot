@@ -8,8 +8,10 @@
       ]
     },
     "tencent": {
-      "enabled": false,
-      "regions": []
+      "enabled": true,
+      "regions": [
+        "ap-tokyo"
+      ]
     }
   },
   "mappings": [
@@ -17,14 +19,28 @@
       "agent": "ec2-alert-analyzer",
       "service": "EC2",
       "severity": "high",
-      "source": "prometheus",
-      "skill": "ec2-alert-analyzer"
+      "skill": "ec2-alert-analyzer",
+      "source": "prometheus"
     },
     {
       "agent": "ec2-alert-analyzer",
       "service": "EC2",
       "severity": "critical",
+      "skill": "ec2-alert-analyzer",
+      "source": "prometheus"
+    },
+    {
       "source": "prometheus",
+      "service": "EKS",
+      "severity": "high",
+      "agent": "ec2-alert-analyzer",
+      "skill": "ec2-alert-analyzer"
+    },
+    {
+      "source": "prometheus",
+      "service": "EKS",
+      "severity": "critical",
+      "agent": "ec2-alert-analyzer",
       "skill": "ec2-alert-analyzer"
     }
   ],
