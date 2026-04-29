@@ -134,6 +134,19 @@ class ConfigStore:
         data["pinned_resources"] = pins
         self._write_dashboard_config(data)
 
+    def read_alert_defaults(self) -> dict:
+        data = self._read_dashboard_config()
+        return data.get("alert_defaults", {
+            "agent": "ec2-alert-analyzer",
+            "tools": ["execute_bash"],
+            "timeout": 300
+        })
+
+    def write_alert_defaults(self, defaults: dict) -> None:
+        data = self._read_dashboard_config()
+        data["alert_defaults"] = defaults
+        self._write_dashboard_config(data)
+
     @staticmethod
     def _migrate_config(cfg: dict) -> dict:
         if "providers" not in cfg and "regions" in cfg:

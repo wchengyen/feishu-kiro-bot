@@ -222,6 +222,23 @@ def post_mappings():
     return jsonify({"ok": True})
 
 
+@dashboard_bp.route("/api/dashboard/alert-defaults", methods=["GET"])
+@require_auth
+def get_alert_defaults():
+    store = ConfigStore(env_path=os.environ.get("ENV_PATH", ".env"))
+    return jsonify({"ok": True, "defaults": store.read_alert_defaults()})
+
+
+@dashboard_bp.route("/api/dashboard/alert-defaults", methods=["POST"])
+@require_auth
+def post_alert_defaults():
+    payload = request.get_json(silent=True) or {}
+    store = ConfigStore(env_path=os.environ.get("ENV_PATH", ".env"))
+    defaults = payload.get("defaults", {})
+    store.write_alert_defaults(defaults)
+    return jsonify({"ok": True})
+
+
 @dashboard_bp.route("/api/dashboard/service-rules", methods=["GET"])
 @require_auth
 def get_service_rules():
