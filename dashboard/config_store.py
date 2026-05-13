@@ -15,6 +15,8 @@ CORE_KEYS = [
     "WEBHOOK_HOST",
     "ENABLE_MEMORY",
     "GROUP_AT_ONLY",
+    "DEFAULT_MODEL",
+    "BACKGROUND_MODEL",
 ]
 
 
