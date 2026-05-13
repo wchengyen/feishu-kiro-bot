@@ -1142,13 +1142,22 @@ const ConfigPage = {
       </div>
       <div v-if="tab === 'core'">
         <div class="toolbar"><button @click="saveCore">保存</button></div>
+        <div v-if="modelError" style="color:#ef4444;margin-bottom:8px">模型列表加载失败: {{ modelError }}</div>
         <div class="table-wrap">
           <table>
             <thead><tr><th>Key</th><th>Value</th></tr></thead>
             <tbody>
               <tr v-for="(v, k) in core" :key="k">
                 <td>{{ k }}</td>
-                <td><input v-model="core[k]" style="width:100%" /></td>
+                <td>
+                  <select v-if="(k === 'DEFAULT_MODEL' || k === 'BACKGROUND_MODEL') && modelOptions.length" v-model="core[k]" style="width:100%">
+                    <option value="">系统默认 — kiro-cli 自动选择</option>
+                    <option v-for="m in modelOptions" :key="m.model_id" :value="m.model_id">
+                      {{ m.model_id }} — {{ m.description }}
+                    </option>
+                  </select>
+                  <input v-else v-model="core[k]" style="width:100%" />
+                </td>
               </tr>
               <tr v-if="Object.keys(core).length === 0"><td colspan="2" class="empty">暂无配置</td></tr>
             </tbody>
@@ -1252,12 +1261,26 @@ const ConfigPage = {
     const alertDefaults = reactive({ agent: "ec2-alert-analyzer", tools: ["execute_bash"], timeout: 300 });
     const showDefaults = ref(false);
     const toolOptions = ["execute_bash", "fs_read", "fs_write", "grep", "glob"];
+    const modelOptions = ref([]);
+    const modelError = ref("");
+
+    async function loadModels() {
+      try {
+        const data = await api("/models");
+        modelOptions.value = data.models || [];
+        modelError.value = data.error || "";
+      } catch (e) {
+        modelOptions.value = [];
+        modelError.value = String(e);
+      }
+    }
 
     async function load() {
       try {
         const c = await api("/config");
         Object.assign(core, c.config || {});
       } catch {}
+      await loadModels();
       try {
         const m = await api("/mappings");
         mappings.value = normalizeMappings(m.mappings || []);
@@ -1402,6 +1425,7 @@ const ConfigPage = {
       tab, core, mappings, serviceRules, agents, skills, agentSkillsMap,
       alertDefaults, showDefaults, toolOptions,
       sourceOptions, agentOptions,
+      modelOptions, modelError,
       saveCore, saveMappings, addMapping, removeMapping, moveMapping,
       addLabel, removeLabel, saveAlertDefaults, reloadConfig,
       saveServiceRules, addServiceRule, removeServiceRule,
