@@ -257,6 +257,29 @@ def post_alert_defaults():
     return jsonify({"ok": True})
 
 
+@dashboard_bp.route("/api/dashboard/models", methods=["GET"])
+@require_auth
+def list_models():
+    """Return available models from kiro-cli --list-models."""
+    import json as _json
+    import shutil
+    import subprocess
+
+    kiro_bin = shutil.which("kiro-cli") or "/home/ubuntu/.local/bin/kiro-cli"
+    try:
+        result = subprocess.run(
+            [kiro_bin, "chat", "--list-models", "--format", "json"],
+            capture_output=True, text=True, timeout=15,
+        )
+        if result.returncode == 0:
+            data = _json.loads(result.stdout)
+            return jsonify(data)
+    except Exception as e:
+        return jsonify({"models": [], "default_model": None, "error": str(e)}), 500
+
+    return jsonify({"models": [], "default_model": None, "error": "kiro-cli failed"}), 500
+
+
 @dashboard_bp.route("/api/dashboard/reload-config", methods=["POST"])
 @require_auth
 def post_reload_config():

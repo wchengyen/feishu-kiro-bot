@@ -135,3 +135,38 @@ def test_post_mappings(auth_client, monkeypatch, tmp_path):
     resp = auth_client.post("/api/dashboard/mappings", json=payload)
     assert resp.status_code == 200
     assert resp.json == {"ok": True}
+
+
+def test_get_models(auth_client, monkeypatch):
+    """Test /models returns structure even if kiro-cli is mocked."""
+    import subprocess
+
+    def mock_run(*args, **kwargs):
+        class R:
+            returncode = 0
+            stdout = '{"models": [{"model_id": "test-model"}], "default_model": "test-model"}'
+        return R()
+
+    monkeypatch.setattr(subprocess, "run", mock_run)
+    resp = auth_client.get("/api/dashboard/models")
+    assert resp.status_code == 200
+    data = resp.json
+    assert "models" in data
+    assert data["default_model"] == "test-model"
+
+
+def test_get_models_fallback_on_error(auth_client, monkeypatch):
+    """Test /models returns empty list when kiro-cli fails."""
+    import subprocess
+
+    def mock_run(*args, **kwargs):
+        class R:
+            returncode = 1
+            stdout = ""
+        return R()
+
+    monkeypatch.setattr(subprocess, "run", mock_run)
+    resp = auth_client.get("/api/dashboard/models")
+    assert resp.status_code in (200, 500)
+    data = resp.json
+    assert "models" in data
